@@ -23,6 +23,9 @@ dependencies:
   app_links: ^7.2.1
   image_picker: ^1.2.3
   geolocator: ^14.0.3
+  uuid: ^4.6.0
+  intl: ^0.20.3
+  meta: ^1.18.0
 
 dev_dependencies:
   flutter_test:

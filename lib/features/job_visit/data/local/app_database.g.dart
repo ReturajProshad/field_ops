@@ -4,7 +4,7 @@ part of 'app_database.dart';
 
 // ignore_for_file: type=lint
 class $JobVisitsTable extends JobVisits
-    with TableInfo<$JobVisitsTable, JobVisit> {
+    with TableInfo<$JobVisitsTable, JobVisitRow> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
@@ -155,7 +155,7 @@ class $JobVisitsTable extends JobVisits
   static const String $name = 'job_visits';
   @override
   VerificationContext validateIntegrity(
-    Insertable<JobVisit> instance, {
+    Insertable<JobVisitRow> instance, {
     bool isInserting = false,
   }) {
     final context = VerificationContext();
@@ -259,9 +259,9 @@ class $JobVisitsTable extends JobVisits
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
   @override
-  JobVisit map(Map<String, dynamic> data, {String? tablePrefix}) {
+  JobVisitRow map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return JobVisit(
+    return JobVisitRow(
       id: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}id'],
@@ -319,7 +319,7 @@ class $JobVisitsTable extends JobVisits
   }
 }
 
-class JobVisit extends DataClass implements Insertable<JobVisit> {
+class JobVisitRow extends DataClass implements Insertable<JobVisitRow> {
   final String id;
   final int createdAt;
   final String status;
@@ -332,7 +332,7 @@ class JobVisit extends DataClass implements Insertable<JobVisit> {
   final String syncState;
   final String deviceId;
   final String? baseSnapshot;
-  const JobVisit({
+  const JobVisitRow({
     required this.id,
     required this.createdAt,
     required this.status,
@@ -405,12 +405,12 @@ class JobVisit extends DataClass implements Insertable<JobVisit> {
     );
   }
 
-  factory JobVisit.fromJson(
+  factory JobVisitRow.fromJson(
     Map<String, dynamic> json, {
     ValueSerializer? serializer,
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return JobVisit(
+    return JobVisitRow(
       id: serializer.fromJson<String>(json['id']),
       createdAt: serializer.fromJson<int>(json['createdAt']),
       status: serializer.fromJson<String>(json['status']),
@@ -444,7 +444,7 @@ class JobVisit extends DataClass implements Insertable<JobVisit> {
     };
   }
 
-  JobVisit copyWith({
+  JobVisitRow copyWith({
     String? id,
     int? createdAt,
     String? status,
@@ -457,7 +457,7 @@ class JobVisit extends DataClass implements Insertable<JobVisit> {
     String? syncState,
     String? deviceId,
     Value<String?> baseSnapshot = const Value.absent(),
-  }) => JobVisit(
+  }) => JobVisitRow(
     id: id ?? this.id,
     createdAt: createdAt ?? this.createdAt,
     status: status ?? this.status,
@@ -473,8 +473,8 @@ class JobVisit extends DataClass implements Insertable<JobVisit> {
     deviceId: deviceId ?? this.deviceId,
     baseSnapshot: baseSnapshot.present ? baseSnapshot.value : this.baseSnapshot,
   );
-  JobVisit copyWithCompanion(JobVisitsCompanion data) {
-    return JobVisit(
+  JobVisitRow copyWithCompanion(JobVisitsCompanion data) {
+    return JobVisitRow(
       id: data.id.present ? data.id.value : this.id,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       status: data.status.present ? data.status.value : this.status,
@@ -500,7 +500,7 @@ class JobVisit extends DataClass implements Insertable<JobVisit> {
 
   @override
   String toString() {
-    return (StringBuffer('JobVisit(')
+    return (StringBuffer('JobVisitRow(')
           ..write('id: $id, ')
           ..write('createdAt: $createdAt, ')
           ..write('status: $status, ')
@@ -535,7 +535,7 @@ class JobVisit extends DataClass implements Insertable<JobVisit> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is JobVisit &&
+      (other is JobVisitRow &&
           other.id == this.id &&
           other.createdAt == this.createdAt &&
           other.status == this.status &&
@@ -550,7 +550,7 @@ class JobVisit extends DataClass implements Insertable<JobVisit> {
           other.baseSnapshot == this.baseSnapshot);
 }
 
-class JobVisitsCompanion extends UpdateCompanion<JobVisit> {
+class JobVisitsCompanion extends UpdateCompanion<JobVisitRow> {
   final Value<String> id;
   final Value<int> createdAt;
   final Value<String> status;
@@ -599,7 +599,7 @@ class JobVisitsCompanion extends UpdateCompanion<JobVisit> {
        statusUpdatedAt = Value(statusUpdatedAt),
        syncState = Value(syncState),
        deviceId = Value(deviceId);
-  static Insertable<JobVisit> custom({
+  static Insertable<JobVisitRow> custom({
     Expression<String>? id,
     Expression<int>? createdAt,
     Expression<String>? status,
@@ -1202,7 +1202,7 @@ typedef $$JobVisitsTableUpdateCompanionBuilder =
     });
 
 final class $$JobVisitsTableReferences
-    extends BaseReferences<_$AppDatabase, $JobVisitsTable, JobVisit> {
+    extends BaseReferences<_$AppDatabase, $JobVisitsTable, JobVisitRow> {
   $$JobVisitsTableReferences(super.$_db, super.$_table, super.$_typedResult);
 
   static MultiTypedResultKey<$LocationPointsTable, List<LocationPoint>>
@@ -1473,14 +1473,14 @@ class $$JobVisitsTableTableManager
         RootTableManager<
           _$AppDatabase,
           $JobVisitsTable,
-          JobVisit,
+          JobVisitRow,
           $$JobVisitsTableFilterComposer,
           $$JobVisitsTableOrderingComposer,
           $$JobVisitsTableAnnotationComposer,
           $$JobVisitsTableCreateCompanionBuilder,
           $$JobVisitsTableUpdateCompanionBuilder,
-          (JobVisit, $$JobVisitsTableReferences),
-          JobVisit,
+          (JobVisitRow, $$JobVisitsTableReferences),
+          JobVisitRow,
           PrefetchHooks Function({bool locationPointsRefs})
         > {
   $$JobVisitsTableTableManager(_$AppDatabase db, $JobVisitsTable table)
@@ -1573,7 +1573,7 @@ class $$JobVisitsTableTableManager
                 return [
                   if (locationPointsRefs)
                     await $_getPrefetchedData<
-                      JobVisit,
+                      JobVisitRow,
                       $JobVisitsTable,
                       LocationPoint
                     >(
@@ -1602,14 +1602,14 @@ typedef $$JobVisitsTableProcessedTableManager =
     ProcessedTableManager<
       _$AppDatabase,
       $JobVisitsTable,
-      JobVisit,
+      JobVisitRow,
       $$JobVisitsTableFilterComposer,
       $$JobVisitsTableOrderingComposer,
       $$JobVisitsTableAnnotationComposer,
       $$JobVisitsTableCreateCompanionBuilder,
       $$JobVisitsTableUpdateCompanionBuilder,
-      (JobVisit, $$JobVisitsTableReferences),
-      JobVisit,
+      (JobVisitRow, $$JobVisitsTableReferences),
+      JobVisitRow,
       PrefetchHooks Function({bool locationPointsRefs})
     >;
 typedef $$LocationPointsTableCreateCompanionBuilder =

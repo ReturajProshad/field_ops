@@ -1,5 +1,8 @@
 import 'package:drift/drift.dart';
 
+/// Drift would otherwise generate the row class as `JobVisit`, colliding with
+/// the domain entity `JobVisit` — so the row is explicitly named `JobVisitRow`.
+@DataClassName('JobVisitRow')
 class JobVisits extends Table {
   TextColumn get id => text()();
   IntColumn get createdAt => integer()();

@@ -8,6 +8,8 @@
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
 	<string>Field Ops</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>FieldOps uses your location to record GPS coordinates for job visits.</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
