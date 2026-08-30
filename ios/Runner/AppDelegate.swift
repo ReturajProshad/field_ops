@@ -12,5 +12,10 @@ import UIKit
 
   func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
     GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
+    // Phase 10: our real Swift location handler (CLLocationManager lifecycle
+    // + channel), registered the same way a plugin would be.
+    if let registrar = engineBridge.applicationRegistrar {
+      LocationTrackingHandler.register(with: registrar)
+    }
   }
 }

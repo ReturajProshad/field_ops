@@ -21,6 +21,15 @@
 	<string>Field Ops</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>FieldOps uses your location to record GPS coordinates for job visits.</string>
+	<!-- Phase 10: required for the Always prompt; distinct from the
+	     When-In-Use string above. Without it the Always dialog can't appear. -->
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>FieldOps records your location in the background while a job visit is active to build the visit's location trail.</string>
+	<!-- Phase 10: background location delivery. -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>location</string>
+	</array>
 	<key>NSFaceIDUsageDescription</key>
 	<string>FieldOps uses Face ID to unlock job visit photos.</string>
 	<key>CFBundleExecutable</key>
