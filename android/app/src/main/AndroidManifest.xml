@@ -1,6 +1,13 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <!-- Phase 9: background-location foreground service. The FGS type +
+         permission are mandatory on Android 14 — omitting either throws at
+         service startup. ACCESS_BACKGROUND_LOCATION drives the Android 10-11+
+         "Allow all the time" upgrade flow. -->
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
     <!-- Phase 8: Android 13+ notifications are silently dropped without this
          runtime permission; also declared by the flutter_local_notifications
          plugin, re-declared here for explicitness. -->
@@ -38,6 +45,12 @@
                 <data android:scheme="fieldops"/>
             </intent-filter>
         </activity>
+        <!-- Phase 9: foreground location service. `foregroundServiceType` is
+             the Android 14 non-negotiable. -->
+        <service
+            android:name=".ForegroundLocationService"
+            android:exported="false"
+            android:foregroundServiceType="location" />
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data
