@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer' as developer;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -42,6 +43,7 @@ class _CreateJobVisitScreenState extends ConsumerState<CreateJobVisitScreen> {
     // Online app: give the new visit a chance to sync instead of sitting at
     // Pending forever. Best-effort, single-flight guarded.
     unawaited(ref.read(autoSyncProvider)());
+    developer.log("id=$id");
     context.pushReplacement(AppRoutes.detail(id));
   }
 

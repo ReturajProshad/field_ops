@@ -1,8 +1,11 @@
+import 'package:app_links/app_links.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/router/app_router.dart';
+import 'core/router/deep_link_service.dart';
 import 'core/theme/app_theme.dart';
+import 'services/notifications/notification_service.dart';
 import 'services/secure_storage/secure_storage_service.dart';
 
 Future<void> main() async {
@@ -11,11 +14,23 @@ Future<void> main() async {
   // mock backend reads it back out and attaches it to every fake request.
   try {
     await SecureStorageService().ensureToken();
-  } catch (_) {
-    // Non-fatal: an unwritable secure store (e.g. a locked-down emulator)
-    // must not block the app from launching.
-  }
+  } catch (_) {}
+
+  final notifications = NotificationService();
+  final deepLinks = DeepLinkService(
+    router: appRouter,
+    notifications: notifications,
+    appLinks: AppLinks(),
+  );
+  try {
+    await notifications.initialize(
+      onDidReceiveNotificationResponse: deepLinks.onNotificationResponse,
+    );
+  } catch (_) {}
+
   runApp(const ProviderScope(child: FieldOpsApp()));
+
+  await deepLinks.start();
 }
 
 class FieldOpsApp extends StatelessWidget {

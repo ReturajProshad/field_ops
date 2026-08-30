@@ -1,3 +1,5 @@
+import 'dart:developer' as developer;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -68,7 +70,10 @@ class JobVisitListScreen extends ConsumerWidget {
                   final visit = visits[index];
                   return JobVisitListTile(
                     visit: visit,
-                    onTap: () => context.push(AppRoutes.detail(visit.id)),
+                    onTap: () {
+                      developer.log("id=${visit.id}");
+                      context.push(AppRoutes.detail(visit.id));
+                    },
                   );
                 },
               ),

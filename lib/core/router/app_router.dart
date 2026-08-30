@@ -45,11 +45,20 @@ final List<GoRoute> appRoutes = [
 ];
 
 /// App-wide router. Order is load-bearing: `/visit/new` MUST precede
-/// `/visit/:id`, or `new` matches as the id param. Deep-link targets for
-/// Phases 8+ land on `/visit/:id`.
-final appRouter = GoRouter(
+final GoRouter appRouter = GoRouter(
   initialLocation: AppRoutes.list,
   routes: appRoutes,
+  redirect: (context, state) {
+    final uri = state.uri;
+    if (uri.scheme != 'fieldops') return null;
+    final segments = uri.pathSegments.where((s) => s.isNotEmpty).toList();
+    if (segments.isEmpty || segments.first.isEmpty) return AppRoutes.list;
+    final id = segments.first;
+    if (segments.length == 2 && segments[1] == 'photo') {
+      return AppRoutes.photo(id);
+    }
+    return AppRoutes.detail(id);
+  },
 );
 
 /// Fresh router for tests (independent navigation state per case).
