@@ -26,13 +26,16 @@ class JobVisitDetailScreen extends ConsumerWidget {
     final visitAsync = ref.watch(jobVisitByIdProvider(id));
 
     return visitAsync.when(
-      loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (e, _) => Scaffold(
-        body: EmptyState(icon: Icons.error_outline, message: 'Something went wrong: $e'),
+        body: EmptyState(
+          icon: Icons.error_outline,
+          message: 'Something went wrong: $e',
+        ),
       ),
-      data: (visit) => visit == null
-          ? _NotFoundScreen()
-          : _DetailBody(visit: visit),
+      data: (visit) =>
+          visit == null ? _NotFoundScreen() : _DetailBody(visit: visit),
     );
   }
 }
@@ -94,9 +97,7 @@ class _DetailBodyState extends ConsumerState<_DetailBody> {
     try {
       final position = await ref.read(currentLocationProvider).fetch();
       if (position != null) {
-        await _edit(
-          JobVisitPatch(gpsLat: position.lat, gpsLng: position.lng),
-        );
+        await _edit(JobVisitPatch(gpsLat: position.lat, gpsLng: position.lng));
       }
     } finally {
       if (mounted) setState(() => _updatingLocation = false);
@@ -113,7 +114,15 @@ class _DetailBodyState extends ConsumerState<_DetailBody> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Job Visit'),
-        actions: [Padding(padding: const EdgeInsets.only(right: 12), child: SyncStateChip(key: Key('detail_sync_chip_${visit.id}'), syncState: visit.syncState))],
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: SyncStateChip(
+              key: Key('detail_sync_chip_${visit.id}'),
+              syncState: visit.syncState,
+            ),
+          ),
+        ],
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
@@ -124,19 +133,35 @@ class _DetailBodyState extends ConsumerState<_DetailBody> {
             onChanged: (next) => _edit(JobVisitPatch(status: next)),
           ),
           const SizedBox(height: 8),
-          Row(children: [Text('Status: '), StatusChip(status: visit.status)]),
+          Row(
+            children: [
+              Text('Status: '),
+              StatusChip(status: visit.status),
+            ],
+          ),
           const SizedBox(height: 24),
-
-          // GPS — visit's own stored coordinate (not the LocationPoints trail).
           Card(
             child: ListTile(
-              leading: Icon(Icons.my_location, color: hasGps ? scheme.primary : scheme.onSurfaceVariant),
-              title: Text(hasGps ? '${visit.gpsLat!.toStringAsFixed(4)}, ${visit.gpsLng!.toStringAsFixed(4)}' : 'No GPS recorded'),
-              subtitle: Text(hasGps && visit.gpsUpdatedAt != null
-                  ? 'Updated ${_formatTimestamp(visit.gpsUpdatedAt!)}'
-                  : 'Set at creation, or update now'),
+              leading: Icon(
+                Icons.my_location,
+                color: hasGps ? scheme.primary : scheme.onSurfaceVariant,
+              ),
+              title: Text(
+                hasGps
+                    ? '${visit.gpsLat!.toStringAsFixed(4)}, ${visit.gpsLng!.toStringAsFixed(4)}'
+                    : 'No GPS recorded',
+              ),
+              subtitle: Text(
+                hasGps && visit.gpsUpdatedAt != null
+                    ? 'Updated ${_formatTimestamp(visit.gpsUpdatedAt!)}'
+                    : 'Set at creation, or update now',
+              ),
               trailing: _updatingLocation
-                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
                   : IconButton(
                       icon: const Icon(Icons.my_location),
                       tooltip: 'Update location',
@@ -146,26 +171,37 @@ class _DetailBodyState extends ConsumerState<_DetailBody> {
           ),
           const SizedBox(height: 16),
 
-          // Photo — displayed only as a locked placeholder; tap is a no-op
-          // until Phase 7's gated viewer exists. Add/replace is available now.
+          // Photo — displayed only as a locked placeholder. The gate lives
+          // inside the viewer (ui-plan §3.4), so tapping just navigates there.
           Card(
             child: ListTile(
               leading: hasPhoto
                   ? LockedPhotoPlaceholder(dimensions: 48)
-                  : Icon(Icons.add_photo_alternate_outlined, color: scheme.onSurfaceVariant),
-              title: Text(hasPhoto
-                  ? 'Photo attached (locked)'
-                  : 'No photo attached'),
-              subtitle: Text(hasPhoto
-                  ? 'Unlockable from the photo viewer'
-                  : 'Add a photo from your gallery'),
+                  : Icon(
+                      Icons.add_photo_alternate_outlined,
+                      color: scheme.onSurfaceVariant,
+                    ),
+              title: Text(
+                hasPhoto ? 'Photo attached (locked)' : 'No photo attached',
+              ),
+              subtitle: Text(
+                hasPhoto
+                    ? 'Unlockable from the photo viewer'
+                    : 'Add a photo from your gallery',
+              ),
               trailing: _addingPhoto
-                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
                   : TextButton(
                       onPressed: _addOrReplacePhoto,
                       child: Text(hasPhoto ? 'Replace' : 'Add'),
                     ),
-              onTap: hasPhoto ? null : null, // locked placeholder tap = no-op until Phase 7
+              onTap: hasPhoto
+                  ? () => context.push(AppRoutes.photo(visit.id))
+                  : null,
             ),
           ),
         ],

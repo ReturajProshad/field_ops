@@ -10,6 +10,8 @@
 	<string>Field Ops</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>FieldOps uses your location to record GPS coordinates for job visits.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>FieldOps uses Face ID to unlock job visit photos.</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>

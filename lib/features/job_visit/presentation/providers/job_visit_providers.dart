@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/di/database_provider.dart';
+import '../../../../services/biometrics/biometrics_service.dart';
 import '../../../../services/location/current_location.dart';
 import '../../../../services/media/photo_store.dart';
 import '../../data/repositories/job_visit_repository_impl.dart';
@@ -37,6 +38,10 @@ final currentLocationProvider = Provider<CurrentLocation>((ref) {
 });
 
 final photoStoreProvider = Provider<PhotoStore>((ref) => PhotoStore());
+
+final biometricsServiceProvider = Provider<BiometricsService>((ref) {
+  return BiometricsService();
+});
 
 /// All visits, newest first, as streamed by the repository.
 final jobVisitsStreamProvider = StreamProvider<List<JobVisit>>((ref) {

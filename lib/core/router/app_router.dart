@@ -4,6 +4,7 @@ import '../../features/job_visit/presentation/create/create_job_visit_screen.dar
 import '../../features/job_visit/presentation/debug/debug_menu_screen.dart';
 import '../../features/job_visit/presentation/detail/job_visit_detail_screen.dart';
 import '../../features/job_visit/presentation/list/job_visit_list_screen.dart';
+import '../../features/job_visit/presentation/photo/job_visit_photo_viewer_screen.dart';
 import 'app_routes.dart';
 
 /// Route list, flat per ui-plan §2. Exposed separately so tests can construct
@@ -19,6 +20,14 @@ final List<GoRoute> appRoutes = [
     path: AppRoutes.create,
     name: 'createJobVisit',
     builder: (context, state) => const CreateJobVisitScreen(),
+  ),
+  GoRoute(
+    path: AppRoutes.photoPattern,
+    name: 'jobVisitPhoto',
+    builder: (context, state) {
+      final id = state.pathParameters['id']!;
+      return JobVisitPhotoViewerScreen(id: id);
+    },
   ),
   GoRoute(
     path: AppRoutes.detailPattern,
