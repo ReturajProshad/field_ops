@@ -351,6 +351,113 @@ void main() {
     expect(logText, contains('[visit-1] commit: row + baseSnapshot'));
     expect(logText, contains('sync run: done — 1 visit(s) synced'));
   });
+
+  test('onVisitSynced fires with merge data for a remote status change',
+      () async {
+    final baseline = syncedBaseline(makeVisit());
+    await repository.upsert(baseline);
+    await backend.upsertVisit(baseline);
+
+    // Backend status changes (Device B); local untouched.
+    await backend.upsertVisit(
+      baseline.copyWith(
+        status: JobVisitStatus.completed,
+        statusUpdatedAt: 3000,
+        deviceId: 'device-b',
+      ),
+    );
+
+    JobVisit? lastMerged;
+    JobVisit? lastPreviousLocal;
+    Set<MergeField>? lastRemoteChanged;
+    final engine = SyncEngine(
+      repository: repository,
+      backend: backend,
+      merger: merger,
+      onVisitSynced: ({
+        required JobVisit merged,
+        required JobVisit? previousLocal,
+        required Set<MergeField> remoteChangedFields,
+      }) {
+        lastMerged = merged;
+        lastPreviousLocal = previousLocal;
+        lastRemoteChanged = remoteChangedFields;
+      },
+    );
+
+    expect((await engine.sync()).succeeded, isTrue);
+
+    expect(lastPreviousLocal, isNotNull, reason: 'visit was known locally');
+    expect(lastPreviousLocal!.status, JobVisitStatus.enRoute);
+    expect(lastRemoteChanged, {MergeField.status},
+        reason: 'only status changed on the remote side');
+    expect(lastMerged!.status, JobVisitStatus.completed,
+        reason: 'merged carries the remote winner');
+    expect(lastMerged!.syncState, JobVisitSyncState.synced,
+        reason: 'clean remote-only update, no conflict');
+  });
+
+  test('onVisitSynced reports no remote changes for a local-only edit', () async {
+    final baseline = syncedBaseline(makeVisit());
+    await repository.upsert(baseline);
+    await backend.upsertVisit(baseline);
+
+    // Local-only status edit; backend untouched.
+    await repository.upsert(
+      baseline.copyWith(
+        status: JobVisitStatus.onSite,
+        statusUpdatedAt: 2000,
+        syncState: JobVisitSyncState.pending,
+      ),
+    );
+
+    Set<MergeField>? lastRemoteChanged;
+    JobVisit? lastPreviousLocal;
+    final engine = SyncEngine(
+      repository: repository,
+      backend: backend,
+      merger: merger,
+      onVisitSynced: ({
+        required JobVisit merged,
+        required JobVisit? previousLocal,
+        required Set<MergeField> remoteChangedFields,
+      }) {
+        lastPreviousLocal = previousLocal;
+        lastRemoteChanged = remoteChangedFields;
+      },
+    );
+
+    expect((await engine.sync()).succeeded, isTrue);
+
+    expect(lastPreviousLocal, isNotNull);
+    expect(lastRemoteChanged, isEmpty,
+        reason: 'a consumer gated on remote status change stays silent here');
+  });
+
+  test('onVisitSynced reports previousLocal as null for a remote-created visit',
+      () async {
+    await backend.upsertVisit(
+      syncedBaseline(makeVisit(id: 'remote-only', status: JobVisitStatus.completed)),
+    );
+
+    JobVisit? lastPreviousLocal;
+    final engine = SyncEngine(
+      repository: repository,
+      backend: backend,
+      merger: merger,
+      onVisitSynced: ({
+        required JobVisit merged,
+        required JobVisit? previousLocal,
+        required Set<MergeField> remoteChangedFields,
+      }) {
+        lastPreviousLocal = previousLocal;
+      },
+    );
+
+    expect((await engine.sync()).succeeded, isTrue);
+    expect(lastPreviousLocal, isNull,
+        reason: 'remote-created visits were never known locally — gate 1 suppresses the notification');
+  });
 }
 
 class _GatedBackend implements SyncBackend {
