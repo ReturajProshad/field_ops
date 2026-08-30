@@ -70,6 +70,7 @@ class _JobVisitPhotoViewerScreenState
   }
 
   Future<void> _attemptUnlock() async {
+    if (!mounted) return;
     setState(() => _outcome = _GateOutcome.checking);
     final result = await ref.read(biometricsServiceProvider).authenticate();
     if (!mounted) return;
@@ -83,12 +84,21 @@ class _JobVisitPhotoViewerScreenState
           _GateOutcome.permanentlyLockedOut,
         _ => _GateOutcome.failed,
       };
+
       final path = _photoPath;
       _photoExists =
           _outcome == _GateOutcome.success &&
           path != null &&
           File(path).existsSync();
     });
+  }
+
+  void _back() {
+    if (context.canPop()) {
+      context.pop();
+    } else {
+      context.go(AppRoutes.list);
+    }
   }
 
   Widget _gateBody() {
@@ -107,14 +117,21 @@ class _JobVisitPhotoViewerScreenState
               icon: Icons.broken_image_outlined,
               message: 'Photo file not available on this device.',
               actionLabel: 'Back',
-              onAction: () => context.pop(),
+              onAction: _back,
             ),
           );
         }
         return Scaffold(
           appBar: appBar,
           body: Center(
-            child: Image.file(File(_photoPath!), fit: BoxFit.contain),
+            child: Image.file(
+              File(_photoPath!),
+              fit: BoxFit.contain,
+              errorBuilder: (_, _, _) => const EmptyState(
+                icon: Icons.broken_image_outlined,
+                message: 'Photo file not available on this device.',
+              ),
+            ),
           ),
         );
       case _GateOutcome.notSetUp:
@@ -187,7 +204,7 @@ class _JobVisitPhotoViewerScreenState
         icon: Icons.photo_outlined,
         message: 'This visit has no photo attached.',
         actionLabel: 'Back',
-        onAction: () => context.pop(),
+        onAction: _back,
       ),
     );
   }
