@@ -24,4 +24,21 @@ class AppDatabase extends _$AppDatabase {
       await customStatement('PRAGMA foreign_keys = ON');
     },
   );
+
+  /// Appends a location tick. The *only* persistence path for the background
+  /// tracking service — `JobVisits.gpsLat/gpsLng/gpsUpdatedAt` are NEVER
+  /// touched by tracking (memory.md rule), so sync never sees a per-tick GPS
+  /// change.
+  Future<void> insertLocationPoint(LocationPointsCompanion point) {
+    return into(locationPoints).insert(point);
+  }
+
+  /// Live trail for one visit, oldest first — the trail indicator's data
+  /// source (Phases 9–10).
+  Stream<List<LocationPoint>> watchLocationPointsByVisit(String visitId) {
+    final query = select(locationPoints)
+      ..where((t) => t.jobVisitId.equals(visitId))
+      ..orderBy([(t) => OrderingTerm.asc(t.capturedAt)]);
+    return query.watch();
+  }
 }

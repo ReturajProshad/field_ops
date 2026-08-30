@@ -11,9 +11,11 @@ import '../../../../core/widgets/locked_photo_placeholder.dart';
 import '../../../../core/widgets/status_chip.dart';
 import '../../../../core/widgets/status_selector.dart';
 import '../../../../core/widgets/sync_state_chip.dart';
+import '../../../../services/location/location_tracking_service.dart';
 import '../../domain/entities/job_visit.dart';
 import '../../domain/usecases/edit_job_visit.dart';
 import '../providers/job_visit_providers.dart';
+import '../providers/location_tracking_providers.dart';
 import '../providers/sync_providers.dart';
 
 class JobVisitDetailScreen extends ConsumerWidget {
@@ -171,6 +173,16 @@ class _DetailBodyState extends ConsumerState<_DetailBody> {
           ),
           const SizedBox(height: 16),
 
+          // Background location tracking — the native FGS/manger is started
+          // and stopped here; ticks never touch JobVisits.gpsUpdatedAt.
+          _TrackingCard(visitId: visit.id),
+          const SizedBox(height: 16),
+
+          // Trail indicator — live proof that background ticks land in
+          // LocationPoints only.
+          _TrailCard(visitId: visit.id),
+          const SizedBox(height: 16),
+
           // Photo — displayed only as a locked placeholder. The gate lives
           // inside the viewer (ui-plan §3.4), so tapping just navigates there.
           Card(
@@ -213,5 +225,102 @@ class _DetailBodyState extends ConsumerState<_DetailBody> {
     final dt = DateTime.fromMillisecondsSinceEpoch(ms);
     String two(int n) => n.toString().padLeft(2, '0');
     return '${dt.year}-${two(dt.month)}-${two(dt.day)} ${two(dt.hour)}:${two(dt.minute)}';
+  }
+}
+
+class _TrackingCard extends ConsumerWidget {
+  const _TrackingCard({required this.visitId});
+
+  final String visitId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final scheme = Theme.of(context).colorScheme;
+    final tracking = ref.watch(locationTrackingControllerProvider);
+    final active =
+        tracking.status == TrackingStatus.tracking &&
+        tracking.activeVisitId == visitId;
+
+    return Card(
+      child: SwitchListTile(
+        secondary: Icon(
+          Icons.gps_fixed,
+          color: active ? scheme.primary : scheme.onSurfaceVariant,
+        ),
+        title: const Text('Track location'),
+        subtitle: Text(_statusLabel(tracking)),
+        value: active,
+        onChanged: (on) {
+          final controller = ref.read(
+            locationTrackingControllerProvider.notifier,
+          );
+          if (on) {
+            controller.start(visitId);
+          } else {
+            controller.stop();
+          }
+        },
+      ),
+    );
+  }
+
+  String _statusLabel(TrackingState tracking) {
+    switch (tracking.status) {
+      case TrackingStatus.idle:
+        return 'Idle — ticks are recorded per visit while tracking is on.';
+      case TrackingStatus.tracking:
+        if (tracking.activeVisitId != visitId) {
+          return 'Tracking another visit — stop it there first.';
+        }
+        return 'Recording background ticks to this visit\'s trail.';
+      case TrackingStatus.permissionDenied:
+        return tracking.message ?? 'Location permission denied.';
+      case TrackingStatus.backgroundDenied:
+        return tracking.message ??
+            'Foreground-only — "Allow all the time" is needed for screen-locked ticks.';
+      case TrackingStatus.downgraded:
+        return tracking.message ??
+            'Background access downgraded; ticks may pause.';
+    }
+  }
+}
+
+class _TrailCard extends ConsumerWidget {
+  const _TrailCard({required this.visitId});
+
+  final String visitId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final pointsAsync = ref.watch(locationPointsByVisitProvider(visitId));
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: pointsAsync.when(
+          loading: () => const SizedBox(
+            height: 20,
+            child: Center(
+              child: SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            ),
+          ),
+          error: (e, _) => Text('Trail unavailable: $e'),
+          data: (points) {
+            if (points.isEmpty) {
+              return const Text('Background trail: 0 points so far.');
+            }
+            final last = points.last;
+            return Text(
+              'Background trail: ${points.length} point(s) · '
+              'last: ${last.lat.toStringAsFixed(4)}, ${last.lng.toStringAsFixed(4)}',
+            );
+          },
+        ),
+      ),
+    );
   }
 }
