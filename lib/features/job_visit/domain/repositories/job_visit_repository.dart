@@ -12,6 +12,10 @@ abstract class JobVisitRepository {
   /// Returns the current value of [watchById] once.
   Future<JobVisit?> getById(String id);
 
+  /// All visits, newest first, as a one-shot read — the sync engine iterates
+  /// over this to build the local-side id set.
+  Future<List<JobVisit>> getAll();
+
   /// Inserts or overwrites [visit] by id. Persisting is the repository's only
   /// job — it does NOT stamp or normalize fields (the caller owns that).
   Future<void> upsert(JobVisit visit);

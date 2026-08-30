@@ -32,6 +32,13 @@ class JobVisitRepositoryImpl implements JobVisitRepository {
   }
 
   @override
+  Future<List<JobVisit>> getAll() async {
+    final rows = await (_db.select(_db.jobVisits)
+      ..orderBy([(t) => OrderingTerm.desc(t.createdAt)])).get();
+    return _mapRows(rows);
+  }
+
+  @override
   Future<void> upsert(JobVisit visit) async {
     await _db.into(_db.jobVisits).insertOnConflictUpdate(_toCompanion(visit));
   }

@@ -8,4 +8,6 @@ class AppRoutes {
   /// Path pattern used in route *registration*.
   static const String detailPattern = '/visit/:id';
   static String detail(String id) => '/visit/$id';
+
+  static const String debug = '/debug';
 }

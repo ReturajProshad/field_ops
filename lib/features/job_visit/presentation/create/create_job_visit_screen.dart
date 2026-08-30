@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -5,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/router/app_routes.dart';
 import '../../../../core/widgets/status_selector.dart';
 import '../providers/create_job_visit_form.dart';
+import '../providers/sync_providers.dart';
 
 class CreateJobVisitScreen extends ConsumerStatefulWidget {
   const CreateJobVisitScreen({super.key});
@@ -36,6 +39,9 @@ class _CreateJobVisitScreenState extends ConsumerState<CreateJobVisitScreen> {
         );
       return;
     }
+    // Online app: give the new visit a chance to sync instead of sitting at
+    // Pending forever. Best-effort, single-flight guarded.
+    unawaited(ref.read(autoSyncProvider)());
     context.pushReplacement(AppRoutes.detail(id));
   }
 

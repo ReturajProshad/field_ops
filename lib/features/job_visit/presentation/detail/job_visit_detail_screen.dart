@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -12,6 +14,7 @@ import '../../../../core/widgets/sync_state_chip.dart';
 import '../../domain/entities/job_visit.dart';
 import '../../domain/usecases/edit_job_visit.dart';
 import '../providers/job_visit_providers.dart';
+import '../providers/sync_providers.dart';
 
 class JobVisitDetailScreen extends ConsumerWidget {
   const JobVisitDetailScreen({super.key, required this.id});
@@ -66,6 +69,8 @@ class _DetailBodyState extends ConsumerState<_DetailBody> {
 
   Future<void> _edit(JobVisitPatch patch) async {
     await ref.read(editJobVisitProvider).call(current: _visit, patch: patch);
+    // Online app: push the edit through immediately. Best-effort, guarded.
+    unawaited(ref.read(autoSyncProvider)());
     // Rebuild follows from the reactive stream; nothing else to do.
   }
 

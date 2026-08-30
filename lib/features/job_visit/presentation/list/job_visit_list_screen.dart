@@ -19,6 +19,11 @@ class JobVisitListScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Job Visits'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.bug_report_outlined),
+            tooltip: 'Debug menu',
+            onPressed: () => context.push(AppRoutes.debug),
+          ),
           Padding(
             padding: const EdgeInsets.only(right: 12),
             child: SegmentedButton<VisitSortMode>(
