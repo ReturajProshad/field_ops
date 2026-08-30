@@ -43,6 +43,9 @@ StatusChangeNotice? statusChangeNotice({
   );
 }
 
+/// Status labels kept dependency-free so [statusChangeNotice] (and its tests)
+/// don't need widget code. Duplicates `StatusChip.labelFor` by design — the
+/// services layer must not import the presentation layer.
 abstract final class StatusChipLabel {
   static String forStatus(JobVisitStatus status) => switch (status) {
     JobVisitStatus.enRoute => 'En Route',
@@ -68,9 +71,17 @@ class NotificationService {
   Future<void> initialize({
     DidReceiveNotificationResponseCallback? onDidReceiveNotificationResponse,
   }) async {
+    // iOS: request*Permission false keeps the OS prompt OUT of startup init —
+    // it happens later via [requestPermissions], after the first frame. A
+    // permission dialog blocking the launch screen (pre-runApp) is a black
+    // first-frame on camera (Phase 8 review).
     const settings = InitializationSettings(
       android: AndroidInitializationSettings('@mipmap/ic_launcher'),
-      iOS: DarwinInitializationSettings(),
+      iOS: DarwinInitializationSettings(
+        requestAlertPermission: false,
+        requestBadgePermission: false,
+        requestSoundPermission: false,
+      ),
     );
     await _plugin.initialize(
       settings: settings,
@@ -91,9 +102,20 @@ class NotificationService {
           importance: Importance.max,
         ),
       );
+    }
+  }
+
+  /// Requests notification permission — called AFTER `runApp` (post-first-frame),
+  /// so a first-launch OS prompt never blocks the app from rendering (Android
+  /// 13+ `POST_NOTIFICATIONS` is ignored silently without this grant).
+  Future<void> requestPermissions() async {
+    final android = _plugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
+    if (android != null) {
       await android.requestNotificationsPermission();
     }
-
     final ios = _plugin
         .resolvePlatformSpecificImplementation<
           IOSFlutterLocalNotificationsPlugin
