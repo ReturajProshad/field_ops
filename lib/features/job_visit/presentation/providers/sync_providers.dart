@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 
+import '../../../../services/notifications/notification_service.dart';
 import '../../../../services/secure_storage/secure_storage_service.dart';
 import '../../data/models/job_visit_merger.dart';
 import '../../data/remote/mock_sync_service.dart';
@@ -32,23 +33,19 @@ final secureStorageServiceProvider = Provider<SecureStorageService>((ref) {
   return SecureStorageService();
 });
 
-/// JSON-file-backed mock backend. The file lives in the app-support dir so it
-/// survives both app restarts and device reboots. The token provider reads real
-/// secure storage (Keystore/Keychain) — but it is *injected* so engine tests
-/// can supply a fake instead of hitting a platform channel.
+/// Local notification service (init + show only; the *when* is decided by the
+/// sync engine's `onVisitSynced` gates in [syncEngineProvider]).
+final notificationServiceProvider = Provider<NotificationService>((ref) {
+  return NotificationService();
+});
+
 final mockSyncServiceProvider = FutureProvider<MockSyncService>((ref) async {
   final dir = await getApplicationSupportDirectory();
   final file = File('${dir.path}/mock_backend.json');
   final storage = ref.read(secureStorageServiceProvider);
-  return MockSyncService(
-    file: file,
-    tokenProvider: () => storage.readToken(),
-  );
+  return MockSyncService(file: file, tokenProvider: () => storage.readToken());
 });
 
-/// The sync engine wired to the real local DB and the mock backend. Its
-/// per-step [SyncEngine] `onEvent` instrumentation feeds the developer log so
-/// the demo can narrate, step by step, exactly what each sync just did.
 final syncEngineProvider = FutureProvider<SyncEngine>((ref) async {
   final backend = await ref.watch(mockSyncServiceProvider.future);
   return SyncEngine(
@@ -61,14 +58,35 @@ final syncEngineProvider = FutureProvider<SyncEngine>((ref) async {
         SyncLogLine(message: line, at: DateTime.now()),
       ];
       // Cap the in-memory log so a long demo doesn't grow without bound.
-      ref.read(syncLogProvider.notifier).state =
-          next.length > 400 ? next.sublist(next.length - 400) : next;
+      ref.read(syncLogProvider.notifier).state = next.length > 400
+          ? next.sublist(next.length - 400)
+          : next;
     },
+
+    onVisitSynced:
+        ({
+          required merged,
+          required previousLocal,
+          required remoteChangedFields,
+        }) {
+          final notice = statusChangeNotice(
+            merged: merged,
+            previousLocal: previousLocal,
+            remoteChangedFields: remoteChangedFields,
+          );
+          if (notice != null) {
+            ref
+                .read(notificationServiceProvider)
+                .showStatusChanged(
+                  visitId: notice.visitId,
+                  title: notice.title,
+                  body: notice.body,
+                );
+          }
+        },
   );
 });
 
-/// Debug-menu state: simulated connectivity. Flipping to online triggers a
-/// sync run — the toggle *is* the "connectivity restored" event.
 final isOnlineProvider = StateProvider<bool>((ref) => true);
 
 /// Debug-menu state: fail the Nth record of the next sync run.
@@ -77,10 +95,6 @@ final failAfterRecordsProvider = StateProvider<int?>((ref) => null);
 /// Debug-menu state: the developer log. Newest entries last.
 final syncLogProvider = StateProvider<List<SyncLogLine>>((ref) => []);
 
-/// Best-effort background sync after a local create/edit when online, so a
-/// freshly saved visit doesn't sit at Pending forever in an "online" app. The
-/// single-flight guard + participated-skip make it cheap; failures are
-/// swallowed here (the debug toggle's explicit sync is where outcomes surface).
 final autoSyncProvider = Provider<Future<void> Function()>((ref) {
   return () async {
     try {
