@@ -41,7 +41,6 @@ class LocationTrackingHandler: NSObject,
             binaryMessenger: registrar.messenger()
         )
         events.setStreamHandler(shared)
-        registrar.addApplicationDelegate(shared)
     }
 
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
@@ -82,6 +81,7 @@ class LocationTrackingHandler: NSObject,
         manager.distanceFilter = 5
         manager.allowsBackgroundLocationUpdates = true
         manager.pausesLocationUpdatesAutomatically = false
+        manager.showsBackgroundLocationIndicator = true
         locationManager = manager
 
         switch authStatus {
@@ -122,11 +122,19 @@ class LocationTrackingHandler: NSObject,
             manager.startUpdatingLocation()
             emitStatus("tracking", "Recording the location trail for this visit.")
         case .authorizedWhenInUse:
-            // The brief names this exact case: granted When-In-Use, screen
-            // locks → delivery stops silently. Surface it rather than die.
+            // First-tap fix (review): iOS 13+ `requestAlwaysAuthorization()` can
+            // land as provisional When-In-Use. Start foreground delivery NOW for
+            // a pending session; background delivery waits for the Always
+            // upgrade. Without this the first tap never starts ticking and the
+            // toggle flips off immediately.
+            if !currentVisitId.isEmpty, let manager = locationManager {
+                manager.startUpdatingLocation()
+            }
+            // The brief's named case: granted When-In-Use / Always downgraded
+            // mid-session → delivery limits. Surface it rather than die.
             emitStatus(
                 "downgraded",
-                "Background access is While-In-Use only — ticks pause when the screen locks. Open Settings to allow Always."
+                "Background access is While-In-Use only — enable Always-allow in Settings for guaranteed screen-locked delivery."
             )
         case .denied, .restricted:
             emitStatus("permission_denied", "Location permission denied.")
@@ -148,6 +156,10 @@ class LocationTrackingHandler: NSObject,
     }
 
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        if let clError = error as? CLError, clError.code == .denied {
+            emitStatus("permission_denied", "Location permission denied.")
+            return
+        }
         emitStatus("downgraded", "Location unavailable: \(error.localizedDescription)")
     }
 

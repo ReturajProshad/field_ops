@@ -44,6 +44,18 @@ class TrackingState {
   }
 }
 
+/// App-lifetime controller for background location tracking.
+///
+/// Persists every [TrackingPoint] into `LocationPoints` — the trailing pipe
+/// from "ticks → platform channel → LocationPoints only". `JobVisits` GPS
+/// fields are never touched here (structural: native code has no DB access).
+///
+/// Known limitation (deadline-accepted, review): if the Activity is destroyed
+/// while the FGS keeps running (rare OEM swipe-away paths), the fresh Dart
+/// isolate's controller reports Idle while ticks still flow into
+/// `LocationPoints` (the native bridge re-registers its sink on the new
+/// engine's `onListen`). Data stays correct; only the toggle lies. A
+/// `getState` method-channel query would close it.
 class LocationTrackingController extends Notifier<TrackingState> {
   final Uuid _uuid = const Uuid();
   StreamSubscription<LocationTrackingEvent>? _sub;

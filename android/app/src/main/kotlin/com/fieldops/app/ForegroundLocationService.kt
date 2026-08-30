@@ -59,11 +59,10 @@ class ForegroundLocationService : Service(), LocationListener {
         startAsForeground()
         startListening()
         LocationEventBridge.emitStatus("tracking", "Recording the location trail for this visit.")
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            START_NOT_STICKY // Android 12+ discourages sticky background FGS restarts anyway
-        } else {
-            START_STICKY
-        }
+        // Unconditional START_NOT_STICKY: the null-intent guard above already
+        // forces a graceful stop on system restart, and Android 12+ actively
+        // discourages background FGS restarts.
+        return START_NOT_STICKY
     }
 
     /// `startForeground` with the location type — on Android 14 omitting the
@@ -119,18 +118,13 @@ class ForegroundLocationService : Service(), LocationListener {
 
     private fun startListening() {
         try {
+            // GPS provider only: registering the network provider too can land
+            // near-simultaneous fixes as duplicate trail points. GPS is the
+            // reliable fix for the outdoor field-ops demo (emulator `geo fix`
+            // drives GPS).
             if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
                 locationManager.requestLocationUpdates(
                     LocationManager.GPS_PROVIDER,
-                    UPDATE_INTERVAL_MS,
-                    UPDATE_DISTANCE_M,
-                    this,
-                    Looper.getMainLooper(),
-                )
-            }
-            if (locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
-                locationManager.requestLocationUpdates(
-                    LocationManager.NETWORK_PROVIDER,
                     UPDATE_INTERVAL_MS,
                     UPDATE_DISTANCE_M,
                     this,
