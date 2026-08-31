@@ -15,7 +15,9 @@ engineering judgment, not SDK wiring.
 |---|---|
 | [`release/fieldops.apk`](release/fieldops.apk) | Installable APK (release build, debug-signed) — install without building |
 | [`doc/architecture.md`](doc/architecture.md) | The deep dive: merge `_decide` logic, sync protocol, notification/deep-link chain, native location — with Mermaid diagrams |
-| Video walkthrough | _link to be added_ |
+| Demo walkthrough (video) | [drive.google.com](https://drive.google.com/file/d/1Yrl9YX0le2SGbWM6dVf6kcUvb2f4NCVX/view?usp=sharing) |
+| LWW architecture walkthrough (video) | [drive.google.com](https://drive.google.com/file/d/1VpPhOIGFSAEQlspwrz4JNwCOUPf1rywT/view?usp=sharing) |
+| Why LWW — design rationale (video) | [drive.google.com](https://drive.google.com/file/d/191c6DDXTglDRz5XgATkdzunaHGidTulZ/view?usp=sharing) |
 
 ---
 
@@ -139,8 +141,10 @@ the notification → app cold-starts directly onto that visit's detail.
 adb shell am start -a android.intent.action.VIEW -d "fieldops://visit/<VISIT_ID>"
 ```
 Warm (app open) and cold (`am force-stop` first) both open that visit. A bogus id
-lands on "Visit not found" — never a crash. (A real id is visible in the
-developer log or `adb exec-out run-as com.fieldops.app cat files/mock_backend.json`.)
+lands on "Visit not found" — never a crash. (A real id is visible in the Debug
+Menu's Developer log — every sync prints `sync run: N visit(s) on watch:
+<full-uuid, …>`. Reading it from the app's storage via `run-as` works only on a
+debuggable build, not the release APK.)
 
 **7. Live theme switch.** (no connectivity involved)
 With the app foregrounded: `adb shell cmd uimode night yes` / `no` — the whole
